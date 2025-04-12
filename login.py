@@ -1,5 +1,13 @@
-from flask_login import LoginManager, UserMixin
-from flask import Flask
+from flask_login import LoginManager, UserMixin, login_user
+from flask import Flask, request, redirect, url_for, render_template
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from werkzeug.urls import url_has_allowed_host_and_scheme
+
+class LoginForm(FlaskForm):
+    username = StringField('Username')
+    password = PasswordField('Password')
+    submit = SubmitField('Login')
 
 app = Flask(__name__)
 
@@ -35,3 +43,24 @@ def load_user(user_id):
 # GET - displays the login form.
 # POST - Processes the form (validates credentials)
 @app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    # If the credentials are correct.
+    if form.validate_on_submit():
+        # Login and validate user.
+        login_user(User)
+
+        app.flash('Login Successful!')
+
+        # Directs to the next url
+        next = app.request.args.get('next')
+
+        # If the url is no valid
+        if not url_has_allowed_host_and_scheme(next, request.host):
+            return app.abort(400)
+
+        # This directs you to next if next = 'dashboard'.  Otherwise it redirects to 'index'
+        return redirect(next or url_for('index'))
+
+    # This renders the login html template and passes the form into that object.
+    return render_template('login.html', form=form)
