@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/dashboard_style.css">
+    <title>AlarmCast</title>
+</head>
+<body>
+    <div id="error-container">
+        <div id="status-container">
+            <div id="ip-status-container">
+                <p>IP Address: {{ ip_address }}</p>
+            </div>
+            <div id="alarmclass-status-container">
+                <p>Alarm Class: {{ alarm_class }}</p>
+            </div>
+            <div id="user-status-container">
+                <p>{{ user }}</p>
+            </div>
+        </div>
+        <div id="error-status-container">
+            <h6>Error Log</h6>
+            <div id="error-status">
+                <p>I need to add an updated list of errors.</p>
+            </div>
+        </div>
+    </div>
+    <div id="form-container">
+        <div id="form-image-container">
+            <img src="../static/AlarmCast Logo.png" alt="alarmCast Logo">
+        </div>
+        <h4>Enter New Values If Needed</h4>
+        <div id="ip-container">
+            <label for="ipaddress">Enter the station IP address:</label>
+            <input type="text" name="ipaddress" id="ipaddress">
+            <button id="ip-submit" type="submit">Update</button>
+        </div>
+        <div id="adduser-container">
+            <h6>Add a user here</h6>
+            <label for="addname">Name:</label>
+            <input type="text" name="addname" id="addname">
+            <label for="addnumber">Phone Number:</label>
+            <input type="tel" name="addnumber" id="addnumber">
+            <button id="user-add" type="submit">Add User</button>
+        </div>
+        <div id="removeuser-container">
+            <h6>Remove a user here</h6>
+            <label for="removename">Name:</label>
+            <input type="text" name="removename" id="removename">
+            <label for="removenumber">Phone Number:</label>
+            <input type="tel" name="removenumber" id="removenumber">
+            <button id="user-remove" type="submit">Remove User</button>
+        </div>
+        <div id="alarm-class-container">
+            <label for="alarm-class">Alarm Class:</label>
+            <input type="text" name="alarm-class" id="alarm-class">
+            <button type="submit" id="alarm-class-button">Add Class</button>
+        </div>
+        <div id="time-delay-container">
+            <label for="time-delay">Time between texts(hrs):</label>
+            <input type="number" name="time-delay" id="time-delay">
+            <button id="time-delay-button" type="submit">Add Delay</button>
+        </div>
+    </div>
+    <div id="alarm-container">
+        <div id="logout-button-container">
+            <button id="logout-button" type="submit">Logout</button>
+        </div>
+        <div id="reboot-container">
+            <div id="status-container">
+                <p>Status: {{ status }}</p>
+            </div>
+            <button id="reboot-button" type="submit">Reboot</button>
+            <p>Make sure to refresh your browser after hitting the reboot button.</p>
+        </div>
+        <div id="alarm-log-container">
+            <div id="alarm-log">
+                <p>I need to add the alarm log here.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
