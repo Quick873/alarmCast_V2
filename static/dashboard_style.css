@@ -1,0 +1,137 @@
+body {
+    background-color: lightblue;
+    display: flex;
+}
+
+#error-container {
+    display: flex;
+    width: 25%;
+    flex-direction: column;
+    margin: 1%;
+    height: 100vh;
+}
+
+#form-container {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#form-image-container {
+    width: 50%;
+}
+
+img {
+    width: 100%;
+}
+
+#alarm-log-container {
+    display: flex;
+    flex-direction: column;
+    width: 25%;
+}
+
+#values-status-container {
+    background-color: rgb(165, 165, 165);
+     border: 2px solid black;
+     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+     display: flex;
+     flex-direction: column;
+     justify-content: center;
+     align-items: center;
+}
+
+#ip-status-container {
+    background-color: white;
+    border: 1px solid black;
+    width: 75%;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 2%;
+}
+
+#alarmclass-status-container {
+    background-color: white;
+    border: 1px solid black;
+    width: 75%;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 2%;
+}
+
+#user-status-container {
+    background-color: white;
+    border: 1px solid black;
+    width: 75%;
+    height: 60%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5%;
+    margin-top: 2%;
+}
+
+#error-status-container {
+    background-color: rgb(165, 165, 165);
+    border: 2px solid black;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 5%;
+    height: 60%;
+}
+
+#error-status {
+    background-color: white;
+    border: 1px solid black;
+    width: 75%;
+    height: 75%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2%;
+}
+
+#ip-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#adduser-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#removeuser-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#alarm-class-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#time-delay-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
