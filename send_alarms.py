@@ -12,6 +12,11 @@ client = Client(account_sid, auth_token)
 
 
 
-def alarm_messages(names, parent_name, number):
+def alarm_messages(names, station_name, number):
     for name in names:
+        message = client.messages.create(
+            body=f"{name} is in Alarm! {station_name}",
+            from_="+15157052770",
+            to=f"+1{number}"
+        )
         
