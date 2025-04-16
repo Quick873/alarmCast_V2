@@ -31,19 +31,19 @@
             <img src="../static/AlarmCast Logo.png" alt="alarmCast Logo">
         </div>
         <h4>Enter New Values If Needed</h4>
-        <div id="ip-container">
+        <form action="/update_ip" method="post" id="ip-container">
             <label for="ipaddress">Enter the station IP address:</label>
-            <input type="text" name="ipaddress" id="ipaddress">
+            <input type="text" name="ipaddress" id="ipaddress" value="ipaddress">
             <button id="ip-submit" type="submit">Update</button>
-        </div>
-        <div id="adduser-container">
+        </form>
+        <form action="adduser" method="post" id="adduser-container">
             <h4 id="adduser-title">Add a user here</h4>
             <label for="addname">Name:</label>
             <input type="text" name="addname" id="addname">
             <label for="addnumber">Phone Number:</label>
             <input type="tel" name="addnumber" id="addnumber">
             <button id="user-add" type="submit">Add User</button>
-        </div>
+        </form>
         <div id="removeuser-container">
             <h4>Remove a user here</h4>
             <label for="removename">Name:</label>
