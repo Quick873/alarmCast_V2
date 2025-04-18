@@ -43,7 +43,7 @@ def adduser():
     
     conn.commit()
     # Add values to the table
-    cursor.execute('INSERT INTO users (name,phone) VALUES (?,?) ({addname}, {addnumber})')
+    cursor.execute('INSERT INTO users (name,phone) VALUES (?,?)', (addname, addnumber))
     conn.commit()
 
     # Pull values from table
@@ -56,7 +56,21 @@ def adduser():
     conn.close()
     return render_template('/dashboard.html', user=user_list)
 
-
+@app.route('/removeuser', methods=['POST'])
+def remove_user():
+    remove_name = request.form.get('removename')
+    remove_number = request.form.get('removenumber')
+    conn = sqlite3.connect('./user_database.db')
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM users WHERE name = ? AND phone = ?', (remove_name, remove_number))
+    cursor.execute('SELECT * FROM users')
+    rows = cursor.fetchall()
+    user_list = []
+    for row in rows:
+        user_list.append(row)
+        return user_list
+    conn.close()
+    return render_template('./dashboard.html', user=user_list)
 
 bql_query = f"""
 bql:select parent.name as Name, parent.parent.name as Parent_Name, parent.out.value as Value
