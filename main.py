@@ -72,6 +72,36 @@ def remove_user():
     conn.close()
     return render_template('./dashboard.html', user=user_list)
 
+@app.route('/alarmclass', methods=['POST'])
+def get_alarm_class():
+    alarm_class_list = []
+    alarm_class = request.form.get('alarm-class')
+    conn = sqlite3.connect('/alarm_class_database.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS class(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            alarmClass TEXT NOT NULL)''')
+    conn.commit()
+
+    conn.execute('INSERT INTO class(alarmClass) VALUES (?)', (alarm_class))
+    conn.commit()
+
+    conn.execute('SELECT * FROM class')
+    rows = cursor.fetchall()
+    for row in rows:
+        alarm_class_list.append(row)
+        return alarm_class_list
+    return render_template(alarm_class_list)
+
+alarm_class = ''
+
 bql_query = f"""
 bql:select parent.name as Name, parent.parent.name as Parent_Name, parent.out.value as Value
 from baja:Component where alarmClass = {alarm_class}"""
+
+
+
+if __name__ == '__main__':
+
+    app.run('0.0.0.0', debug=True)
