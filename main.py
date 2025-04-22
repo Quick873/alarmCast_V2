@@ -100,6 +100,12 @@ def get_alarm_class():
         return alarm_class_list
     return render_template(alarm_class_list)
 
+@app.route('/timedelay', methods=['POST'])
+def time_delay():
+    delay=request.form.get('timedelay')
+    delay = int(delay) if delay and delay.isdigit() else 0
+    return delay if delay > 0 else 24
+    
 
 alarm_class = ''
 
