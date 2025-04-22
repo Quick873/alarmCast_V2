@@ -17,7 +17,13 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template('dashboard.html')
+    error = False
+    if error:
+        app_status = "Error"
+    else:
+        app_status = 'Running'
+    print(f"App Status: {app_status}")
+    return render_template('dashboard.html', status=app_status)
 
 @app.route('/update_ip', methods=['POST'])
 #This will handle the submission of a new IP in the form.
@@ -94,6 +100,7 @@ def get_alarm_class():
         return alarm_class_list
     return render_template(alarm_class_list)
 
+
 alarm_class = ''
 
 bql_query = f"""
@@ -103,5 +110,5 @@ from baja:Component where alarmClass = {alarm_class}"""
 
 
 if __name__ == '__main__':
-
+    
     app.run('0.0.0.0', debug=True)
