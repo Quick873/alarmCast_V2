@@ -64,9 +64,9 @@
         </form>
     </div>
     <div id="alarm-container">
-        <div id="logout-button-container">
+        <form action="/logout" method="post" id="logout-button-container">
             <button id="logout-button" type="submit">Logout</button>
-        </div>
+        </form>
         <div id="reboot-container">
             <div id="status-container">
                 <p>Status: {{ status }}</p>

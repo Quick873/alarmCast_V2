@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, session, redirect, url_for
 import requests
 import urllib.parse
 from requests.packages.urllib3.exceptions import InsecureRequestWarning # type: ignore
@@ -105,6 +105,13 @@ def time_delay():
     delay=request.form.get('timedelay')
     delay = int(delay) if delay and delay.isdigit() else 0
     return delay if delay > 0 else 24
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    # This might not work since it's started in login.py
+    session.pop('user', None)
+    return redirect(url_for('login'))
+
     
 
 alarm_class = ''
