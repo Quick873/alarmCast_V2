@@ -71,7 +71,9 @@
             <div id="status-container">
                 <p>Status: {{ status }}</p>
             </div>
-            <button id="reboot-button" type="submit">Reboot</button>
+            <form action="/reboot" method="get">
+                <button id="reboot-button" type="submit">Reboot</button>
+            </form>
             <p id="refresh-p">Make sure to refresh your browser after hitting the reboot button.</p>
         </div>
         <div id="alarm-log-container">

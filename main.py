@@ -9,6 +9,7 @@ import time
 from dotenv import load_dotenv
 import os
 import sqlite3
+import subprocess
 
 load_dotenv()
 
@@ -112,7 +113,9 @@ def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
 
-    
+@app.route('/reboot', methods=['GET'])
+def reboot():
+    subprocess.Popen(['usr/bin/docker', 'restart', 'alarmcast'])   
 
 alarm_class = ''
 
