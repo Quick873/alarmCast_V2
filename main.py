@@ -147,10 +147,48 @@ def alarms():
         username = os.getenv('API_USER')
         password = os.getenv('API_PASSWORD')
 
+        # I'm not sure this updates properly
         alarm_names = alarm_list(get_alarms(api_url, username, password))
         return alarm_names
 
 # This will send an alarm when it's a new alarm.  If it not a new alarm it will send on the chosen time delay.
+def send_alarm_messages():
+    # This creates an alarm database to compare the alarms pulled from N4 to the previous alarms.
+    alarm_names = alarms()
+    conn = sqlite3.connect('/alarms.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS alarms(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            alarm TEXT NOT NULL)''')
+    conn.commit()
+
+    cursor.execute('INSERT INTO alarms(alarm) VALUES (?)', (alarm_names))
+    conn.commit()
+
+    cursor.execute('SELECT * FROM alarms')
+    alarm_table = cursor.fetchone()
+    cursor.close()
+
+    # This pulls the user database to send the messages to that user.
+    connection = sqlite3.connect('/user_database.db')
+    user_cursor = connection.cursor()
+    user_cursor.execute('SELECT * FROM users')
+    users = user_cursor.fetchall()
+    user_cursor.close()
+
+    phone_numbers = []
+    for user in users:
+        phone_numbers.append(user[-1])
+        return phone_numbers
+
+    # This will check for new alarms compared to previous alarms and sends them to each user. 
+    for alarm in alarm_names:
+        if alarm not in alarm_table:
+            for number in phone_numbers:
+                alarm_messages(alarm, station_name='Add this', number=number)
+
+    # Make sure to add for existing alarms
 
 
 
