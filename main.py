@@ -3,7 +3,7 @@ import requests
 import urllib.parse
 from requests.packages.urllib3.exceptions import InsecureRequestWarning # type: ignore
 from alarmCast import get_alarms
-from send_alarms import alarm_messages
+from send_alarms import alarm_messages, alarm_list
 import threading
 import time
 from dotenv import load_dotenv
@@ -115,13 +115,43 @@ def logout():
 
 @app.route('/reboot', methods=['GET'])
 def reboot():
-    subprocess.Popen(['usr/bin/docker', 'restart', 'alarmcast'])   
+    subprocess.Popen(['usr/bin/docker', 'restart', 'alarmcast'])
 
-alarm_class = ''
 
-bql_query = f"""
-bql:select parent.name as Name, parent.parent.name as Parent_Name, parent.out.value as Value
-from baja:Component where alarmClass = {alarm_class}"""
+
+# Start by pulling alarm values. 
+def get_alarms(api_url, username, password):
+    response = requests.get(api_url, auth=(username, password), verify=False)
+    data=response.json
+    return data
+
+# This will get the alarms from each alarm class and store them in a list. 
+def alarms():
+    conn = sqlite3.connect('/alarm_class_database.db')   
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM class')
+    classes = cursor.fetchall()
+    cursor.close()
+
+    alarm_names = []
+
+    for alarm_class in classes:
+        bql_query = f"""
+        bql:select parent.name as Name, parent.parent.name as Parent_Name, parent.out.value as Value
+        from baja:Component where alarmClass = {alarm_class}"""
+
+        encoded_query = urllib.parse.quote(bql_query)
+        
+        api_url = f'https://{ipaddress}:443/dgdb?db=bql&query={encoded_query}'
+
+        username = os.getenv('API_USER')
+        password = os.getenv('API_PASSWORD')
+
+        alarm_names = alarm_list(get_alarms(api_url, username, password))
+        return alarm_names
+
+# This will send an alarm when it's a new alarm.  If it not a new alarm it will send on the chosen time delay.
+
 
 
 
