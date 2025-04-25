@@ -18,20 +18,44 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
+    # This is the status of the application. I need to make error alerts in the program.
     error = False
     if error:
         app_status = "Error"
     else:
         app_status = 'Running'
     print(f"App Status: {app_status}")
-    return render_template('dashboard.html', status=app_status)
+
+    # This will get the alarms from the alarm database and display it in the web gui
+    conn = sqlite3.connect('/alarms.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM alarms')
+    alarms = cursor.fetchmany(10)
+    cursor.close
+
+    return render_template('dashboard.html', status=app_status, alarms=alarms)
 
 @app.route('/update_ip', methods=['POST'])
 #This will handle the submission of a new IP in the form.
 def update_ip():
     ip_address = request.form.get('ipaddress')
+    # Creating an ip database
+    conn = sqlite3.connect('/ip_database.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS station(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ipaddress TEXT NOT NULL,)''')
+    conn.commit()
+    cursor.execute('INSERT INTO station (ipaddress) VALUES (?)' (ip_address))
+    conn.commit()
+
+    cursor.execute('SELECT * FROM station')
+    ipaddress = cursor.fetchone()
+    cursor.close()
+
     #This will send the IP address value back to the html file
-    return render_template('/dashboard.html', ip_address=ip_address)
+    return render_template('/dashboard.html', ip_address=ipaddress)
 
 @app.route('/adduser', methods=['POST'])
 # This function assigns the values from the add user form and stores them as a variable.
@@ -70,6 +94,7 @@ def remove_user():
     conn = sqlite3.connect('./user_database.db')
     cursor = conn.cursor()
     cursor.execute('DELETE FROM users WHERE name = ? AND phone = ?', (remove_name, remove_number))
+    conn.commit()
     cursor.execute('SELECT * FROM users')
     rows = cursor.fetchall()
     user_list = []
@@ -105,7 +130,23 @@ def get_alarm_class():
 def time_delay():
     delay=request.form.get('timedelay')
     delay = int(delay) if delay and delay.isdigit() else 0
-    return delay if delay > 0 else 24
+    if delay > 0:
+        delay = delay
+    else:
+        delay = 24
+        
+    conn = sqlite3.connect('delay.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS time_delay(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            delay TEXT NOT NULL)''')
+    conn.commit()
+
+    cursor.execute('INSERT INTO time_delay(delay) VALUES (?)', (delay))
+    conn.commit()
+    cursor.close()
+
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -133,6 +174,12 @@ def alarms():
     classes = cursor.fetchall()
     cursor.close()
 
+    connection = sqlite3.connect('/ip_database.db')
+    ip_cursor = connection.cursor()
+    ip_cursor.execute('SELECT * FROM station')
+    ip_address = ip_cursor.fetchone()
+    ip_cursor.close()
+
     alarm_names = []
 
     for alarm_class in classes:
@@ -142,7 +189,7 @@ def alarms():
 
         encoded_query = urllib.parse.quote(bql_query)
         
-        api_url = f'https://{ipaddress}:443/dgdb?db=bql&query={encoded_query}'
+        api_url = f'https://{ip_address}:443/dgdb?db=bql&query={encoded_query}'
 
         username = os.getenv('API_USER')
         password = os.getenv('API_PASSWORD')
@@ -177,6 +224,14 @@ def send_alarm_messages():
     users = user_cursor.fetchall()
     user_cursor.close()
 
+    # This pulls latest time delay value from the time delay database
+
+    delay_conn = sqlite3.connect('/delay.db')
+    delay_cursor = delay_conn.cursor()
+    delay_cursor.execute('SELECT * FROM time_delay')
+    delay = delay_cursor.fetchone()
+    delay_cursor.close()
+
     phone_numbers = []
     for user in users:
         phone_numbers.append(user[-1])
@@ -189,10 +244,18 @@ def send_alarm_messages():
                 alarm_messages(alarm, station_name='Add this', number=number)
 
     # Make sure to add for existing alarms
+    for alarm in alarm_names:
+        if alarm in alarm_names:
+            time_delay = delay * 60 * 60
+            time.sleep(time_delay)
+            for number in phone_numbers:
+                alarm_messages(alarm, station_name='Add This', number=number)
 
-
-
+def background_tasks():
+    while True:
+        send_alarm_messages()
 
 if __name__ == '__main__':
+    background_tasks()
     
     app.run('0.0.0.0', debug=True)
