@@ -158,7 +158,19 @@ def logout():
 def reboot():
     subprocess.Popen(['usr/bin/docker', 'restart', 'alarmcast'])
 
-
+@app.route('/stationname', methods=['POST'])
+def station_name():
+    name = request.form.get('/stationname')
+    conn = sqlite3.connect('/station_name.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS station_name(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL)''')
+    conn.commit()
+    cursor.execute('INSERT INTO station_name(name) VALUE (?)', (name))
+    conn.commit()
+    cursor.close()
 
 # Start by pulling alarm values. 
 def get_alarms(api_url, username, password):
@@ -232,6 +244,12 @@ def send_alarm_messages():
     delay = delay_cursor.fetchone()
     delay_cursor.close()
 
+    station_conn = sqlite3.connect('/station_name.db')
+    station_cursor = station_conn.cursor()
+    station_cursor.execute('SELECT * FROM station_name')
+    station_name = station_cursor.fetchall()
+    station_cursor.close()
+
     phone_numbers = []
     for user in users:
         phone_numbers.append(user[-1])
@@ -241,7 +259,7 @@ def send_alarm_messages():
     for alarm in alarm_names:
         if alarm not in alarm_table:
             for number in phone_numbers:
-                alarm_messages(alarm, station_name='Add this', number=number)
+                alarm_messages(alarm, station_name=station_name, number=number)
 
     # Make sure to add for existing alarms
     for alarm in alarm_names:
@@ -252,9 +270,10 @@ def send_alarm_messages():
                 alarm_messages(alarm, station_name='Add This', number=number)
 
 def background_tasks():
+
     while True:
         send_alarm_messages()
-
+# I still need to bring in the station name.
 if __name__ == '__main__':
     background_tasks()
     

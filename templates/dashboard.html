@@ -57,10 +57,15 @@
             <input type="text" name="alarm-class" id="alarm-class">
             <button type="submit" id="alarm-class-button">Add Class</button>
         </form>
-        <form accept="timedelay" method="post" id="time-delay-container">
+        <form action="timedelay" method="post" id="time-delay-container">
             <label for="time-delay">Time between texts(hrs):</label>
             <input type="number" name="time-delay" id="time-delay">
             <button id="time-delay-button" type="submit">Add Delay</button>
+        </form>
+        <form action="stationname" method="post" id="station-name-container">
+            <label for="station-name">What is the station's name?</label>
+            <input type="text" name="station-name" id="station-name">
+            <button id="station-name-button" type="submit">Add Name</button>
         </form>
     </div>
     <div id="alarm-container">
@@ -79,7 +84,7 @@
         <div id="alarm-log-container">
             <h1>Alarm Log</h1>
             <div id="alarm-log">
-                <p>I need to add the alarm log here.</p>
+                <p>{{ alarms }}</p>
             </div>
         </div>
     </div>
