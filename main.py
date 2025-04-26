@@ -19,6 +19,7 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     # This is the status of the application. I need to make error alerts in the program.
+    # Add missing values to respective status updates
     error = False
     if error:
         app_status = "Error"
@@ -271,9 +272,34 @@ def send_alarm_messages():
 
 def background_tasks():
 
-    while True:
-        send_alarm_messages()
-# I still need to bring in the station name.
+    ip_conn = sqlite3.connect('/ip_database.db')
+    ip_cursor = ip_conn.cursor()
+    ip_cursor.execute('SELECT * FROM station')
+    ip = ip_cursor.fetchone()
+    ip_cursor.close()
+
+    user_conn = sqlite3.connect('/user_database.db')
+    user_cursor = user_conn.cursor()
+    user_cursor.execute('SELECT * FROM users')
+    users = user_cursor.fetchone()
+    user_cursor.close()
+
+    alarm_class_conn = sqlite3.connect('/alarm_class_database.db')
+    alarm_class_cursor = alarm_class_conn.cursor()
+    alarm_class_cursor.execute('SELECT * FROM class')
+    alarm_class = alarm_class_cursor.fetchone()
+    alarm_class_cursor.close()
+
+    station_name_conn = sqlite3.connect('/station_name.db')
+    station_name_cursor = station_name_conn.cursor()
+    station_name_cursor.execute('SELECT * FROM station_name')
+    station_name = station_name_cursor.fetchone()
+    station_name_cursor.close()
+
+    if ip and users and alarm_class and station_name:
+        while True:
+            send_alarm_messages()
+        
 if __name__ == '__main__':
     background_tasks()
     
