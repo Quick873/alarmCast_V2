@@ -48,12 +48,17 @@ def update_ip():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ipaddress TEXT NOT NULL,)''')
     conn.commit()
-    cursor.execute('INSERT INTO station (ipaddress) VALUES (?)' (ip_address))
+    cursor.execute('INSERT INTO station (ipaddress) VALUES (?)', (ip_address))
     conn.commit()
 
     cursor.execute('SELECT * FROM station')
     ipaddress = cursor.fetchone()
     cursor.close()
+
+    if not ipaddress:
+        ipaddress='Missing Value'
+    else:
+        return ipaddress
 
     #This will send the IP address value back to the html file
     return render_template('/dashboard.html', ip_address=ipaddress)
@@ -86,6 +91,11 @@ def adduser():
         user_list.append(row)
         return user_list
     conn.close()
+
+    if not user_list:
+        user_list = ['Missing Values']
+    else:
+        return user_list
     return render_template('/dashboard.html', user=user_list)
 
 @app.route('/removeuser', methods=['POST'])
@@ -124,6 +134,11 @@ def get_alarm_class():
     rows = cursor.fetchall()
     for row in rows:
         alarm_class_list.append(row)
+        return alarm_class_list
+    
+    if not alarm_class_list:
+        alarm_class_list=['Missing Value']
+    else:
         return alarm_class_list
     return render_template(alarm_class_list)
 
@@ -299,8 +314,41 @@ def background_tasks():
     if ip and users and alarm_class and station_name:
         while True:
             send_alarm_messages()
+
+# This checks to make sure there is a database before starting the script.
+def check_databases():
+    try:
+        ip_conn = sqlite3.connect('/ip_database.db')
+        ip_cursor = ip_conn.cursor()
+        ip_cursor.execute('SELECT * FROM station')
+        if ip_cursor.fetchone() is None:
+            return False
+        
+        user_conn = sqlite3.connect('/user_database.db')
+        user_cursor = user_conn.cursor()
+        user_cursor.execute('SELECT * FROM users')
+        if user_cursor.fetchone() is None:
+            return False
+        
+        conn = sqlite3.connect('alarm_class_database.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM class')
+        if cursor.fetchone() is None:
+            return False
+        
+        conn = sqlite3.connect('station_name.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM station_name')
+        if cursor.fetchone() is None:
+            return False
+        
+        return True
+    except Exception as e:
+        return False
+    
+if check_databases():
+    background_tasks()
         
 if __name__ == '__main__':
-    background_tasks()
     
     app.run('0.0.0.0', debug=True)
