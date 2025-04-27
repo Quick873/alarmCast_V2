@@ -33,38 +33,38 @@
         <h4>Enter New Values If Needed</h4>
         <form action="/update_ip" method="post" id="ip-container">
             <label for="ipaddress">Enter the station IP address:</label>
-            <input type="text" name="ipaddress" id="ipaddress" value="ipaddress">
+            <input type="text" name="ipaddress" id="ipaddress" placeholder="Enter IP Address here.">
             <button id="ip-submit" type="submit">Update</button>
         </form>
         <form action="adduser" method="post" id="adduser-container">
             <h4 id="adduser-title">Add a user here</h4>
             <label for="addname">Name:</label>
-            <input type="text" name="addname" id="addname">
+            <input type="text" name="addname" id="addname" placeholder="Enter one name at a time.">
             <label for="addnumber">Phone Number:</label>
-            <input type="tel" name="addnumber" id="addnumber">
+            <input type="tel" name="addnumber" id="addnumber" placeholder="Enter on number at a time.">
             <button id="user-add" type="submit">Add User</button>
         </form>
         <form action="removeuser" method="post" id="removeuser-container">
             <h4>Remove a user here</h4>
             <label for="removename">Name:</label>
-            <input type="text" name="removename" id="removename">
+            <input type="text" name="removename" id="removename" placeholder="Enter a name.">
             <label for="removenumber">Phone Number:</label>
-            <input type="tel" name="removenumber" id="removenumber">
+            <input type="tel" name="removenumber" id="removenumber" placeholder="Enter a number.">
             <button id="user-remove" type="submit">Remove User</button>
         </form>
         <form action="alarmclass" method="post" id="alarm-class-container">
             <label for="alarm-class">Alarm Class:</label>
-            <input type="text" name="alarm-class" id="alarm-class">
+            <input type="text" name="alarm-class" id="alarm-class" placeholder="Enter one alarm class at a time.">
             <button type="submit" id="alarm-class-button">Add Class</button>
         </form>
         <form action="timedelay" method="post" id="time-delay-container">
             <label for="time-delay">Time between texts(hrs):</label>
-            <input type="number" name="time-delay" id="time-delay">
+            <input type="number" name="time-delay" id="time-delay" placeholder="Enter time delay.">
             <button id="time-delay-button" type="submit">Add Delay</button>
         </form>
         <form action="stationname" method="post" id="station-name-container">
             <label for="station-name">What is the station's name?</label>
-            <input type="text" name="station-name" id="station-name">
+            <input type="text" name="station-name" id="station-name" placeholder="Enter location name.">
             <button id="station-name-button" type="submit">Add Name</button>
         </form>
     </div>

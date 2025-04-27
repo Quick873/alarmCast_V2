@@ -28,13 +28,16 @@ def index():
     print(f"App Status: {app_status}")
 
     # This will get the alarms from the alarm database and display it in the web gui
-    conn = sqlite3.connect('/alarms.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM alarms')
-    alarms = cursor.fetchmany(10)
-    cursor.close
+    try:
+        conn = sqlite3.connect('/alarms.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM alarms')
+        alarms = cursor.fetchmany(10)
+        cursor.close
 
-    return render_template('dashboard.html', status=app_status, alarms=alarms)
+        return render_template('dashboard.html', status=app_status, alarms=alarms)
+    except Exception as e:
+        return render_template('dashboard.html', status=app_status, alarms="No Alarms.")
 
 @app.route('/update_ip', methods=['POST'])
 #This will handle the submission of a new IP in the form.
