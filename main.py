@@ -16,15 +16,13 @@ load_dotenv()
 # This creates the flask app
 app = Flask(__name__)
 
+app_status = "Starting"
+
 @app.route("/")
 def index():
     # This is the status of the application. I need to make error alerts in the program.
     # Add missing values to respective status updates
-    error = False
-    if error:
-        app_status = "Error"
-    else:
-        app_status = 'Running'
+    global app_status
     print(f"App Status: {app_status}")
 
     # This will get the alarms from the alarm database and display it in the web gui
@@ -60,11 +58,10 @@ def update_ip():
 
     if not ipaddress:
         ipaddress='Missing Value'
-    else:
-        return ipaddress
+    
 
     #This will send the IP address value back to the html file
-    return render_template('/dashboard.html', ip_address=ipaddress)
+    return render_template('dashboard.html', ip_address=ipaddress)
 
 @app.route('/adduser', methods=['POST'])
 # This function assigns the values from the add user form and stores them as a variable.
@@ -83,23 +80,21 @@ def adduser():
     
     conn.commit()
     # Add values to the table
-    cursor.execute('INSERT INTO users (name,phone) VALUES (?,?)', (addname, addnumber))
-    conn.commit()
+    if addname and addnumber:
+        cursor.execute('INSERT INTO users (name,phone) VALUES (?,?)', (addname, addnumber))
+        conn.commit()
 
     # Pull values from table
     cursor.execute('SELECT * FROM users')
     rows = cursor.fetchall()
-    user_list = []
-    for row in rows:
-        user_list.append(row)
-        return user_list
     conn.close()
+
+    user_list = [row for row in rows]
 
     if not user_list:
         user_list = ['Missing Values']
-    else:
-        return user_list
-    return render_template('/dashboard.html', user=user_list)
+    
+    return render_template('dashboard.html', user=user_list)
 
 @app.route('/removeuser', methods=['POST'])
 def remove_user():
@@ -109,14 +104,14 @@ def remove_user():
     cursor = conn.cursor()
     cursor.execute('DELETE FROM users WHERE name = ? AND phone = ?', (remove_name, remove_number))
     conn.commit()
-    cursor.execute('SELECT * FROM users')
-    rows = cursor.fetchall()
-    user_list = []
-    for row in rows:
-        user_list.append(row)
-        return user_list
+    #cursor.execute('SELECT * FROM users')
+    #rows = cursor.fetchall()
+    #user_list = []
+    #for row in rows:
+    #    user_list.append(row)
+    #    return user_list
     conn.close()
-    return render_template('./dashboard.html', user=user_list)
+    #return render_template('dashboard.html', user=user_list)
 
 @app.route('/alarmclass', methods=['POST'])
 def get_alarm_class():
@@ -283,10 +278,10 @@ def send_alarm_messages():
     # Make sure to add for existing alarms
     for alarm in alarm_names:
         if alarm in alarm_names:
-            time_delay = delay * 60 * 60
-            time.sleep(time_delay)
             for number in phone_numbers:
                 alarm_messages(alarm, station_name='Add This', number=number)
+        time.sleep(time_delay)
+        time_delay = delay * 60 * 60
 
 def background_tasks():
 
@@ -314,9 +309,14 @@ def background_tasks():
     station_name = station_name_cursor.fetchone()
     station_name_cursor.close()
 
-    if ip and users and alarm_class and station_name:
-        while True:
+    global app_status
+    while True:
+        try:
             send_alarm_messages()
+            app_status = "Running"
+        except Exception as e:
+            app_status = "Error"
+            return False
 
 # This checks to make sure there is a database before starting the script.
 def check_databases():
@@ -351,6 +351,12 @@ def check_databases():
     
 if check_databases():
     background_tasks()
+    app_status = "Running"
+else:
+    app_status = "Error"
+    
+
+
         
 if __name__ == '__main__':
     
