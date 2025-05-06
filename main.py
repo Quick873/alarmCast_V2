@@ -33,9 +33,33 @@ def index():
         alarms = cursor.fetchmany(10)
         cursor.close
 
-        return render_template('dashboard.html', status=app_status, alarms=alarms)
+        user_conn = sqlite3.connect('/user_database.db')
+        user_cursor = user_conn.cursor()
+        user_cursor.execute('SELECT * FROM users')
+        users = user_cursor.fetchall()
+        user_cursor.close
+
+        ip_conn = sqlite3.connect('/ip_database.db')
+        ip_cursor = ip_conn.cursor()
+        ip_cursor.execute('SELECT * FROM station')
+        ip_address = ip_cursor.fetchone()
+        ip_cursor.close
+
+        alarm_class_conn = sqlite3.connect('/alarm_class_database.db')
+        alarm_class_cursor = alarm_class_conn.cursor()
+        alarm_class_cursor.execute('SELECT * FROM class')
+        alarm_class = alarm_class_cursor.fetchall()
+        alarm_class_cursor.close
+
+        error_conn = sqlite3.connect('/error.db')
+        error_cursor = error_conn.cursor()
+        error_cursor.execute('SELECT * FROM errors')
+        errors = error_cursor.fetchmany(10)
+        error_cursor.close
+
+        return render_template('dashboard.html', status=app_status, alarms=alarms, users=users, ip_address=ip_address, alarm_class=alarm_class, errors=errors)
     except Exception as e:
-        return render_template('dashboard.html', status=app_status, alarms="No Alarms.")
+        return render_template('dashboard.html', status=app_status, alarms="No Alarms.", users="Missing Users", ip_address="Missing IP Address", alarm_class="Missing Alarm Class", errors="No Errors")
 
 @app.route('/update_ip', methods=['POST'])
 #This will handle the submission of a new IP in the form.
@@ -315,6 +339,17 @@ def background_tasks():
             send_alarm_messages()
             app_status = "Running"
         except Exception as e:
+            error = 'Send Alarm Error'
+            # Build an error database
+            conn = sqlite3.connect('/error.db')
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS errors
+                    id INTEGER PRIMARY KEY AUTOINCREMENT
+                    error TEXT NOT NULL''')
+            conn.commit()
+            cursor.execute('INSERT INTO errors(error) VALUE(?)', {error})
+            cursor.close()
             app_status = "Error"
             return False
 

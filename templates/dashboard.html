@@ -16,13 +16,31 @@
                 <p>Alarm Class: {{ alarm_class }}</p>
             </div>
             <div id="user-status-container">
-                <p>{{ user }}</p>
+                {% if users == "Missing Users" %}
+                    <p>No user Found</p>
+                {% else %}
+                    <ul>
+                        {% for u in users %}
+                            <li>{{ u[1] }} - {{ u[2] }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
             </div>
         </div>
         <div id="error-status-container">
             <h1>Error Log</h1>
             <div id="error-status">
-                <p>I need to add an updated list of errors.</p>
+                {% if errors == "No Errors" %}
+                    <p>No Errors.</p>
+                {% else %}
+                    <ul>
+                        {% for error in errors %}
+                            <li>
+                                {{ error }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
             </div>
         </div>
     </div>
