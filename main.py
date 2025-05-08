@@ -301,9 +301,9 @@ def send_alarm_messages():
 
     # Make sure to add for existing alarms
     for alarm in alarm_names:
-        if alarm in alarm_names:
+        if alarm in alarm_table:
             for number in phone_numbers:
-                alarm_messages(alarm, station_name='Add This', number=number)
+                alarm_messages(alarm, station_name=station_name, number=number)
         time.sleep(time_delay)
         time_delay = delay * 60 * 60
 
