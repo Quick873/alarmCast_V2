@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, session, redirect, url_for
+from flask import Flask, request, render_template, session, redirect, url_for, flash
 import requests
 import urllib.parse
 from requests.packages.urllib3.exceptions import InsecureRequestWarning # type: ignore
@@ -10,8 +10,7 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 import subprocess
-from flask_login import LoginManager, UserMixin, login_user
-from flask import Flask, request, redirect, url_for, render_template
+from flask_login import LoginManager, UserMixin, login_user, login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 # from werkzeug.urls import url_has_allowed_host_and_scheme
@@ -28,8 +27,6 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password')
     submit = SubmitField('Login')
 
-app = Flask(__name__)
-
 # This is used to validate browser cookies and to make sure they weren't tampered with. 
 app.secret_key = "Redbe@rd@5510"
 
@@ -38,6 +35,7 @@ login_manager = LoginManager()
 
 # This registers Flask Login functionality with the app. 
 login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # This will need to be more secure than this.
 Users = {
@@ -47,15 +45,15 @@ Users = {
 # User Class
 # UserMixin - This is to provide default implementations of is_active(), is_authenticated(), get_id(), is_anonymous()
 class User(UserMixin):
-    pass
-
-user = User()
-user.id = LoginForm.username
+    def __init__(self, id):
+        self.id = id
 
 # This is used to reload the user object from the user ID
 @login_manager.user_loader
 def load_user(user_id):
-    return user.get(user_id)
+    if user_id in Users:
+       return User(user_id)
+    return None 
 
 
 #This will run the function when someone goes to the login URL
@@ -63,34 +61,38 @@ def load_user(user_id):
 # methods=['GET', 'POST'] means this route handles both get and post request.
 # GET - displays the login form.
 # POST - Processes the form (validates credentials)
-@app.route('/login.html', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     # If the credentials are correct.
     if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
         # Login and validate user.
-        login_user(user)
-
-        app.flash('Login Successful!')
+        if username in Users and Users[username]['password'] == password:
+            user = User(username)
+            login_user(user)
+            flash('Login Successful!')
 
         # Directs to the next url
-        next = app.request.args.get('next')
+            next = request.args.get('next')
 
         # If the url is not valid
         # if not url_has_allowed_host_and_scheme(next, request.host):
         #    return app.abort(400)
 
         # This directs you to next if next = 'dashboard'.  Otherwise it redirects to 'index'
-        return redirect(next or url_for('index'))
-
+            return redirect(next or url_for('index'))
+        flash('Incorrect username or password.')
     # This renders the login html template and passes the form into that object.
-    return render_template('/login.html', form=form)
+    return render_template('login.html', form=form)
 
 
 @app.route("/")
+@login_required
 def index():
-    if 'user' not in session:
-        return redirect(url_for('login'))
+    #if 'user' not in session:
+    #    return redirect(url_for('login'))
     # This is the status of the application. I need to make error alerts in the program.
     # Add missing values to respective status updates
     global app_status
@@ -98,31 +100,31 @@ def index():
 
     # This will get the alarms from the alarm database and display it in the web gui
     try:
-        conn = sqlite3.connect('/alarms.db')
+        conn = sqlite3.connect('alarms.db')
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM alarms')
         alarms = cursor.fetchmany(10)
         cursor.close
 
-        user_conn = sqlite3.connect('/user_database.db')
+        user_conn = sqlite3.connect('user_database.db')
         user_cursor = user_conn.cursor()
         user_cursor.execute('SELECT * FROM users')
         users = user_cursor.fetchall()
         user_cursor.close
 
-        ip_conn = sqlite3.connect('/ip_database.db')
+        ip_conn = sqlite3.connect('ip_database.db')
         ip_cursor = ip_conn.cursor()
         ip_cursor.execute('SELECT * FROM station')
         ip_address = ip_cursor.fetchone()
         ip_cursor.close
 
-        alarm_class_conn = sqlite3.connect('/alarm_class_database.db')
+        alarm_class_conn = sqlite3.connect('alarm_class_database.db')
         alarm_class_cursor = alarm_class_conn.cursor()
         alarm_class_cursor.execute('SELECT * FROM class')
         alarm_class = alarm_class_cursor.fetchall()
         alarm_class_cursor.close
 
-        error_conn = sqlite3.connect('/error.db')
+        error_conn = sqlite3.connect('error.db')
         error_cursor = error_conn.cursor()
         error_cursor.execute('SELECT * FROM errors')
         errors = error_cursor.fetchmany(10)
@@ -137,14 +139,14 @@ def index():
 def update_ip():
     ip_address = request.form.get('ipaddress')
     # Creating an ip database
-    conn = sqlite3.connect('/ip_database.db')
+    conn = sqlite3.connect('ip_database.db')
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS station(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ipaddress TEXT NOT NULL,)''')
+            ipaddress TEXT NOT NULL)''')
     conn.commit()
-    cursor.execute('INSERT INTO station (ipaddress) VALUES (?)', (ip_address))
+    cursor.execute('INSERT INTO station (ipaddress) VALUES (?)', (ip_address,))
     conn.commit()
 
     cursor.execute('SELECT * FROM station')
@@ -212,7 +214,7 @@ def remove_user():
 def get_alarm_class():
     alarm_class_list = []
     alarm_class = request.form.get('alarm-class')
-    conn = sqlite3.connect('/alarm_class_database.db')
+    conn = sqlite3.connect('alarm_class_database.db')
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS class(
@@ -270,7 +272,7 @@ def reboot():
 @app.route('/stationname', methods=['POST'])
 def station_name():
     name = request.form.get('/stationname')
-    conn = sqlite3.connect('/station_name.db')
+    conn = sqlite3.connect('station_name.db')
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS station_name(
@@ -289,13 +291,13 @@ def get_alarms(api_url, username, password):
 
 # This will get the alarms from each alarm class and store them in a list. 
 def alarms():
-    conn = sqlite3.connect('/alarm_class_database.db')   
+    conn = sqlite3.connect('alarm_class_database.db')   
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM class')
     classes = cursor.fetchall()
     cursor.close()
 
-    connection = sqlite3.connect('/ip_database.db')
+    connection = sqlite3.connect('ip_database.db')
     ip_cursor = connection.cursor()
     ip_cursor.execute('SELECT * FROM station')
     ip_address = ip_cursor.fetchone()
@@ -339,7 +341,7 @@ def send_alarm_messages():
     cursor.close()
 
     # This pulls the user database to send the messages to that user.
-    connection = sqlite3.connect('/user_database.db')
+    connection = sqlite3.connect('user_database.db')
     user_cursor = connection.cursor()
     user_cursor.execute('SELECT * FROM users')
     users = user_cursor.fetchall()
@@ -347,13 +349,13 @@ def send_alarm_messages():
 
     # This pulls latest time delay value from the time delay database
 
-    delay_conn = sqlite3.connect('/delay.db')
+    delay_conn = sqlite3.connect('delay.db')
     delay_cursor = delay_conn.cursor()
     delay_cursor.execute('SELECT * FROM time_delay')
     delay = delay_cursor.fetchone()
     delay_cursor.close()
 
-    station_conn = sqlite3.connect('/station_name.db')
+    station_conn = sqlite3.connect('station_name.db')
     station_cursor = station_conn.cursor()
     station_cursor.execute('SELECT * FROM station_name')
     station_name = station_cursor.fetchall()
@@ -380,25 +382,25 @@ def send_alarm_messages():
 
 def background_tasks():
 
-    ip_conn = sqlite3.connect('/ip_database.db')
+    ip_conn = sqlite3.connect('ip_database.db')
     ip_cursor = ip_conn.cursor()
     ip_cursor.execute('SELECT * FROM station')
     ip = ip_cursor.fetchone()
     ip_cursor.close()
 
-    user_conn = sqlite3.connect('/user_database.db')
+    user_conn = sqlite3.connect('user_database.db')
     user_cursor = user_conn.cursor()
     user_cursor.execute('SELECT * FROM users')
     users = user_cursor.fetchone()
     user_cursor.close()
 
-    alarm_class_conn = sqlite3.connect('/alarm_class_database.db')
+    alarm_class_conn = sqlite3.connect('alarm_class_database.db')
     alarm_class_cursor = alarm_class_conn.cursor()
     alarm_class_cursor.execute('SELECT * FROM class')
     alarm_class = alarm_class_cursor.fetchone()
     alarm_class_cursor.close()
 
-    station_name_conn = sqlite3.connect('/station_name.db')
+    station_name_conn = sqlite3.connect('station_name.db')
     station_name_cursor = station_name_conn.cursor()
     station_name_cursor.execute('SELECT * FROM station_name')
     station_name = station_name_cursor.fetchone()
@@ -412,7 +414,7 @@ def background_tasks():
         except Exception as e:
             error = 'Send Alarm Error'
             # Build an error database
-            conn = sqlite3.connect('/error.db')
+            conn = sqlite3.connect('error.db')
             cursor = conn.cursor()
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS errors
@@ -427,13 +429,13 @@ def background_tasks():
 # This checks to make sure there is a database before starting the script.
 def check_databases():
     try:
-        ip_conn = sqlite3.connect('/ip_database.db')
+        ip_conn = sqlite3.connect('ip_database.db')
         ip_cursor = ip_conn.cursor()
         ip_cursor.execute('SELECT * FROM station')
         if ip_cursor.fetchone() is None:
             return False
         
-        user_conn = sqlite3.connect('/user_database.db')
+        user_conn = sqlite3.connect('user_database.db')
         user_cursor = user_conn.cursor()
         user_cursor.execute('SELECT * FROM users')
         if user_cursor.fetchone() is None:
@@ -456,7 +458,6 @@ def check_databases():
         return False
     
 if check_databases():
-    background_tasks()
     app_status = "Running"
 else:
     app_status = "Error"
