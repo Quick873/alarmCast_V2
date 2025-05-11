@@ -222,7 +222,7 @@ def get_alarm_class():
             alarmClass TEXT NOT NULL)''')
     conn.commit()
 
-    conn.execute('INSERT INTO class(alarmClass) VALUES (?)', (alarm_class))
+    conn.execute('INSERT INTO class(alarmClass) VALUES (?)', (alarm_class,))
     conn.commit()
 
     conn.execute('SELECT * FROM class')
@@ -233,9 +233,8 @@ def get_alarm_class():
     
     if not alarm_class_list:
         alarm_class_list=['Missing Value']
-    else:
-        return alarm_class_list
-    return render_template(alarm_class_list)
+    
+    return render_template('dashboard.html', alarm_class=alarm_class_list)
 
 @app.route('/timedelay', methods=['POST'])
 def time_delay():
