@@ -99,41 +99,53 @@ def index():
     print(f"App Status: {app_status}")
 
     # This will get the alarms from the alarm database and display it in the web gui
-    try:
-        conn = sqlite3.connect('alarms.db')
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM alarms')
-        alarms = cursor.fetchmany(10)
-        cursor.close
+    while True:
+            conn = sqlite3.connect('alarms.db')
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM alarms')
+            alarms = cursor.fetchmany(10)
+            cursor.close
 
-        user_conn = sqlite3.connect('user_database.db')
-        user_cursor = user_conn.cursor()
-        user_cursor.execute('SELECT * FROM users')
-        users = user_cursor.fetchall()
-        user_cursor.close
+            user_conn = sqlite3.connect('user_database.db')
+            user_cursor = user_conn.cursor()
+            user_cursor.execute('SELECT * FROM users')
+            users = user_cursor.fetchall()
+            user_cursor.close
+            # Pull values from table
+            user_list = [row for row in users]
 
-        ip_conn = sqlite3.connect('ip_database.db')
-        ip_cursor = ip_conn.cursor()
-        ip_cursor.execute('SELECT * FROM station')
-        ip_address = ip_cursor.fetchone()
-        ip_cursor.close
+            if not user_list:
+                user_list = ['Missing Values']
 
-        alarm_class_conn = sqlite3.connect('alarm_class_database.db')
-        alarm_class_cursor = alarm_class_conn.cursor()
-        alarm_class_cursor.execute('SELECT * FROM class')
-        alarm_class = alarm_class_cursor.fetchall()
-        alarm_class_cursor.close
+            ip_conn = sqlite3.connect('ip_database.db')
+            ip_cursor = ip_conn.cursor()
+            ip_cursor.execute('SELECT * FROM station')
+            ip_address = ip_cursor.fetchone()
+            ip_cursor.close
+            if not ip_address:
+                ip_address='Missing Value'
 
-        error_conn = sqlite3.connect('error.db')
-        error_cursor = error_conn.cursor()
-        error_cursor.execute('SELECT * FROM errors')
-        errors = error_cursor.fetchmany(10)
-        error_cursor.close
+            alarm_class_conn = sqlite3.connect('alarm_class_database.db')
+            alarm_class_cursor = alarm_class_conn.cursor()
+            alarm_class_cursor.execute('SELECT * FROM class')
+            alarm_class = alarm_class_cursor.fetchall()
+            alarm_class_cursor.close
+            conn.execute('SELECT * FROM class')
+            for row in alarm_class:
+                alarm_class_list.append(row)
+                return alarm_class_list
+    
+            if not alarm_class_list:
+                alarm_class_list=['Missing Value']
 
-        return render_template('dashboard.html', status=app_status, alarms=alarms, users=users, ip_address=ip_address, alarm_class=alarm_class, errors=errors)
-    except Exception as e:
-        return render_template('dashboard.html', status=app_status, alarms="No Alarms.", users="Missing Users", ip_address="Missing IP Address", alarm_class="Missing Alarm Class", errors="No Errors")
+            error_conn = sqlite3.connect('error.db')
+            error_cursor = error_conn.cursor()
+            error_cursor.execute('SELECT * FROM errors')
+            errors = error_cursor.fetchmany(10)
+            error_cursor.close
 
+            return render_template('dashboard.html', status=app_status, alarms=alarms, users=users, ip_address=ip_address, alarm_class=alarm_class, errors=errors)
+            
 @app.route('/update_ip', methods=['POST'])
 #This will handle the submission of a new IP in the form.
 def update_ip():
@@ -152,13 +164,8 @@ def update_ip():
     cursor.execute('SELECT * FROM station')
     ipaddress = cursor.fetchone()
     cursor.close()
-
-    if not ipaddress:
-        ipaddress='Missing Value'
-    
-
     #This will send the IP address value back to the html file
-    return render_template('dashboard.html', ip_address=ipaddress)
+    return redirect(url_for('index'))
 
 @app.route('/adduser', methods=['POST'])
 # This function assigns the values from the add user form and stores them as a variable.
@@ -180,18 +187,9 @@ def adduser():
     if addname and addnumber:
         cursor.execute('INSERT INTO users (name,phone) VALUES (?,?)', (addname, addnumber))
         conn.commit()
-
-    # Pull values from table
-    cursor.execute('SELECT * FROM users')
-    rows = cursor.fetchall()
     conn.close()
-
-    user_list = [row for row in rows]
-
-    if not user_list:
-        user_list = ['Missing Values']
     
-    return render_template('dashboard.html', user=user_list)
+    return redirect(url_for('index'))
 
 @app.route('/removeuser', methods=['POST'])
 def remove_user():
@@ -225,16 +223,9 @@ def get_alarm_class():
     conn.execute('INSERT INTO class(alarmClass) VALUES (?)', (alarm_class,))
     conn.commit()
 
-    conn.execute('SELECT * FROM class')
-    rows = cursor.fetchall()
-    for row in rows:
-        alarm_class_list.append(row)
-        return alarm_class_list
     
-    if not alarm_class_list:
-        alarm_class_list=['Missing Value']
     
-    return render_template('dashboard.html', alarm_class=alarm_class_list)
+    return redirect(url_for('index'))
 
 @app.route('/timedelay', methods=['POST'])
 def time_delay():
