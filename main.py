@@ -100,51 +100,77 @@ def index():
 
     # This will get the alarms from the alarm database and display it in the web gui
     while True:
-            conn = sqlite3.connect('alarms.db')
-            cursor = conn.cursor()
-            cursor.execute('SELECT * FROM alarms')
-            alarms = cursor.fetchmany(10)
-            cursor.close
+            try:
+                conn = sqlite3.connect('alarms.db')
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM alarms')
+                alarms = cursor.fetchmany(10)
+                cursor.close
 
-            user_conn = sqlite3.connect('user_database.db')
-            user_cursor = user_conn.cursor()
-            user_cursor.execute('SELECT * FROM users')
-            users = user_cursor.fetchall()
-            user_cursor.close
+                if not alarms:
+                    alarms = 'No Alarms.'
+            except Exception as e:
+                alarms = 'No Alarms.'
+
+            try:
+                user_conn = sqlite3.connect('user_database.db')
+                user_cursor = user_conn.cursor()
+                user_cursor.execute('SELECT * FROM users')
+                users = user_cursor.fetchall()
+                user_cursor.close
             # Pull values from table
-            user_list = [row for row in users]
+                user_list = [row for row in users]
 
-            if not user_list:
-                user_list = ['Missing Values']
+                if not user_list:
+                    user_list = 'Missing Values'
+            except Exception as e:
+                user_list = 'Missing Values'
 
-            ip_conn = sqlite3.connect('ip_database.db')
-            ip_cursor = ip_conn.cursor()
-            ip_cursor.execute('SELECT * FROM station')
-            ip_address = ip_cursor.fetchone()
-            ip_cursor.close
-            if not ip_address:
-                ip_address='Missing Value'
+            try:
+                ip_conn = sqlite3.connect('ip_database.db')
+                ip_cursor = ip_conn.cursor()
+                ip_cursor.execute('SELECT * FROM station')
+                ip_address = ip_cursor.fetchone()
+                ip_cursor.close()
 
-            alarm_class_conn = sqlite3.connect('alarm_class_database.db')
-            alarm_class_cursor = alarm_class_conn.cursor()
-            alarm_class_cursor.execute('SELECT * FROM class')
-            alarm_class = alarm_class_cursor.fetchall()
-            alarm_class_cursor.close
-            conn.execute('SELECT * FROM class')
-            for row in alarm_class:
-                alarm_class_list.append(row)
-                return alarm_class_list
+                ip_address = ip_address[1]
+
+                if not ip_address:
+                    ip_address='Missing Value'
+
+            except Exception as e:
+                ip_address = 'Missing Value'
+
+            try:
+                alarm_class_list = []
+                alarm_class_conn = sqlite3.connect('alarm_class_database.db')
+                alarm_class_cursor = alarm_class_conn.cursor()
+                alarm_class_cursor.execute('SELECT * FROM class')
+                alarm_class = alarm_class_cursor.fetchall()
+                alarm_class_cursor.close()
+                for row in alarm_class:
+                    class_name = row[-1]
+                    if class_name not in alarm_class_list:
+                        alarm_class_list.append(class_name)
+                        print(alarm_class_list)
+                    
     
-            if not alarm_class_list:
-                alarm_class_list=['Missing Value']
+                if not alarm_class_list:
+                    alarm_class_list=['Missing Value']
+                
+            except Exception as e:
+                alarm_class_list = ['Missing Value']
 
-            error_conn = sqlite3.connect('error.db')
-            error_cursor = error_conn.cursor()
-            error_cursor.execute('SELECT * FROM errors')
-            errors = error_cursor.fetchmany(10)
-            error_cursor.close
+            try:
+                error_conn = sqlite3.connect('error.db')
+                error_cursor = error_conn.cursor()
+                error_cursor.execute('SELECT * FROM errors')
+                errors = error_cursor.fetchmany(10)
+                error_cursor.close
+            except Exception as e:
+                errors = 'No Errors'    
 
-            return render_template('dashboard.html', status=app_status, alarms=alarms, users=users, ip_address=ip_address, alarm_class=alarm_class, errors=errors)
+            return render_template('dashboard.html', status=app_status, alarms=alarms, users=user_list, ip_address=ip_address, alarm_class=alarm_class_list, errors=errors)
             
 @app.route('/update_ip', methods=['POST'])
 #This will handle the submission of a new IP in the form.
@@ -206,11 +232,10 @@ def remove_user():
     #    user_list.append(row)
     #    return user_list
     conn.close()
-    #return render_template('dashboard.html', user=user_list)
+    return redirect(url_for('index'))
 
 @app.route('/alarmclass', methods=['POST'])
 def get_alarm_class():
-    alarm_class_list = []
     alarm_class = request.form.get('alarm-class')
     conn = sqlite3.connect('alarm_class_database.db')
     cursor = conn.cursor()
@@ -229,7 +254,7 @@ def get_alarm_class():
 
 @app.route('/timedelay', methods=['POST'])
 def time_delay():
-    delay=request.form.get('timedelay')
+    delay=request.form.get('time-delay')
     delay = int(delay) if delay and delay.isdigit() else 0
     if delay > 0:
         delay = delay
@@ -244,7 +269,7 @@ def time_delay():
             delay TEXT NOT NULL)''')
     conn.commit()
 
-    cursor.execute('INSERT INTO time_delay(delay) VALUES (?)', (delay))
+    cursor.execute('INSERT INTO time_delay(delay) VALUE (?)', (delay))
     conn.commit()
     cursor.close()
 
@@ -261,7 +286,7 @@ def reboot():
 
 @app.route('/stationname', methods=['POST'])
 def station_name():
-    name = request.form.get('/stationname')
+    name = request.form.get('station-name')
     conn = sqlite3.connect('station_name.db')
     cursor = conn.cursor()
     cursor.execute('''
@@ -269,9 +294,10 @@ def station_name():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL)''')
     conn.commit()
-    cursor.execute('INSERT INTO station_name(name) VALUE (?)', (name))
+    cursor.execute('INSERT INTO station_name(name) VALUES (?)', (name,))
     conn.commit()
     cursor.close()
+    return redirect(url_for('index'))
 
 # Start by pulling alarm values. 
 def get_alarms(api_url, username, password):
@@ -292,10 +318,17 @@ def alarms():
     ip_cursor.execute('SELECT * FROM station')
     ip_address = ip_cursor.fetchone()
     ip_cursor.close()
+    ip_address = ip_address[1]
 
     alarm_names = []
+    alarm_class_list = []
 
-    for alarm_class in classes:
+    for row in classes:
+        class_name = row[1]
+        if class_name not in alarm_class_list:
+            alarm_class_list.append(class_name)
+
+    for alarm_class in alarm_class_list:
         bql_query = f"""
         bql:select parent.name as Name, parent.parent.name as Parent_Name, parent.out.value as Value
         from baja:Component where alarmClass = {alarm_class}"""
