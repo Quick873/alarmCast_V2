@@ -13,6 +13,7 @@ import subprocess
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
+from datetime import timedelta, datetime
 # from werkzeug.urls import url_has_allowed_host_and_scheme
 
 load_dotenv()
@@ -21,6 +22,8 @@ load_dotenv()
 app = Flask(__name__)
 
 app_status = "Starting"
+
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=20)
 
 class LoginForm(FlaskForm):
     username = StringField('Username')
@@ -72,6 +75,7 @@ def login():
         if username in Users and Users[username]['password'] == password:
             user = User(username)
             login_user(user)
+            session.permanent = True
             flash('Login Successful!')
 
         # Directs to the next url
@@ -348,19 +352,37 @@ def alarms():
 def send_alarm_messages():
     # This creates an alarm database to compare the alarms pulled from N4 to the previous alarms.
     alarm_names = alarms()
+    now = datetime
+    future = now + timedelta(hours=delay)
     conn = sqlite3.connect('/alarms.db')
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS alarms(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            alarm TEXT NOT NULL)''')
+            alarm TEXT NOT NULL,
+            active_since TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1)''')
     conn.commit()
 
-    cursor.execute('INSERT INTO alarms(alarm) VALUES (?)', (alarm_names))
-    conn.commit()
+    for alarm in alarm_names:
+        if alarm not in alarm_table:
+            cursor.execute('INSERT INTO alarms(alarm) VALUES (?, ?)', (alarm_names, now.isoformat(), 1))
+            conn.commit()
+
+        if alarm in alarm_table and alarm_table[2] == 0:
+            cursor.execute('UPDATE alarms(alarm) SET active_since = ?, is_active = 1', (now.isoformat()))
+            conn.commit()
+
+        for row in alarm_table:
+            if row not in alarm_names:
+                cursor.execute('UPDATE alarms(alarm) SET is_active = 0')
+                conn.commit()
+
+
+        
 
     cursor.execute('SELECT * FROM alarms')
-    alarm_table = cursor.fetchone()
+    alarm_table = cursor.fetchall()
     cursor.close()
 
     # This pulls the user database to send the messages to that user.
@@ -389,15 +411,17 @@ def send_alarm_messages():
         phone_numbers.append(user[-1])
         return phone_numbers
 
+
+
     # This will check for new alarms compared to previous alarms and sends them to each user. 
     for alarm in alarm_names:
-        if alarm not in alarm_table:
+        if alarm not in alarm_table[0] or alarm in alarm_table[0] and alarm_table[2] == 1 and alarm_table[1] == now:
             for number in phone_numbers:
                 alarm_messages(alarm, station_name=station_name, number=number)
 
     # Make sure to add for existing alarms
     for alarm in alarm_names:
-        if alarm in alarm_table:
+        if alarm in alarm_table[0] and alarm_table[-1] > future and alarm_table[2] == 1:
             for number in phone_numbers:
                 alarm_messages(alarm, station_name=station_name, number=number)
         time.sleep(time_delay)
