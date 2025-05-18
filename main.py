@@ -366,15 +366,15 @@ def send_alarm_messages():
 
     for alarm in alarm_names:
         if alarm not in alarm_table:
-            cursor.execute('INSERT INTO alarms(alarm) VALUES (?, ?)', (alarm_names, now.isoformat(), 1))
+            cursor.execute('INSERT INTO alarms(alarm, active_since, is_active) VALUES (?, ?, ?)', (alarm, now.isoformat(), 1))
             conn.commit()
 
         if alarm in alarm_table and alarm_table[2] == 0:
-            cursor.execute('UPDATE alarms(alarm) SET active_since = ?, is_active = 1', (now.isoformat()))
+            cursor.execute('UPDATE alarms SET active_since = ?, is_active = 1 WHERE alarm = ?', (now.isoformat(), 1, alarm))
             conn.commit()
 
         for row in alarm_table:
-            if row not in alarm_names:
+            if row not in alarm_names and alarm_table[2] == 1:
                 cursor.execute('UPDATE alarms(alarm) SET is_active = 0')
                 conn.commit()
 
