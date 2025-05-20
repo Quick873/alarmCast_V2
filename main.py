@@ -259,11 +259,7 @@ def get_alarm_class():
 @app.route('/timedelay', methods=['POST'])
 def time_delay():
     delay=request.form.get('time-delay')
-    delay = int(delay) if delay and delay.isdigit() else 0
-    if delay > 0:
-        delay = delay
-    else:
-        delay = 24
+    delay = f'{delay}:00'
         
     conn = sqlite3.connect('delay.db')
     cursor = conn.cursor()
@@ -306,8 +302,18 @@ def station_name():
 # Start by pulling alarm values. 
 def get_alarms(api_url, username, password):
     response = requests.get(api_url, auth=(username, password), verify=False)
-    data=response.json
-    return data
+    if response.status_code == 200 and response.text.strip():
+        try:
+            data=response.json()
+            print('getting alarms')
+            return data
+        except Exception as e:
+            print('no alarm values')
+            return {}
+        
+    else:
+        print('error connecting to station')
+        return {}
 
 # This will get the alarms from each alarm class and store them in a list. 
 def alarms():
@@ -346,14 +352,15 @@ def alarms():
 
         # I'm not sure this updates properly
         alarm_names = alarm_list(get_alarms(api_url, username, password))
+        print('looking for alarms')
         return alarm_names
 
 # This will send an alarm when it's a new alarm.  If it not a new alarm it will send on the chosen time delay.
 def send_alarm_messages():
     # This creates an alarm database to compare the alarms pulled from N4 to the previous alarms.
     alarm_names = alarms()
-    now = datetime
-    future = now + timedelta(hours=delay)
+    now = datetime.now()
+    current_time = now.strftime('%H:%M')
     conn = sqlite3.connect('/alarms.db')
     cursor = conn.cursor()
     cursor.execute('''
@@ -382,7 +389,8 @@ def send_alarm_messages():
         
 
     cursor.execute('SELECT * FROM alarms')
-    alarm_table = cursor.fetchall()
+    # Check if this is being done correctly.
+    alarm_table = {row for row in cursor.fetchall()}
     cursor.close()
 
     # This pulls the user database to send the messages to that user.
@@ -421,11 +429,9 @@ def send_alarm_messages():
 
     # Make sure to add for existing alarms
     for alarm in alarm_names:
-        if alarm in alarm_table[0] and alarm_table[-1] > future and alarm_table[2] == 1:
+        if alarm in alarm_table[0] and current_time == delay and alarm_table[2] == 1:
             for number in phone_numbers:
                 alarm_messages(alarm, station_name=station_name, number=number)
-        time.sleep(time_delay)
-        time_delay = delay * 60 * 60
 
 def background_tasks():
 
@@ -464,11 +470,11 @@ def background_tasks():
             conn = sqlite3.connect('error.db')
             cursor = conn.cursor()
             cursor.execute('''
-                CREATE TABLE IF NOT EXISTS errors
-                    id INTEGER PRIMARY KEY AUTOINCREMENT
-                    error TEXT NOT NULL''')
+                CREATE TABLE IF NOT EXISTS errors(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    error TEXT NOT NULL)''')
             conn.commit()
-            cursor.execute('INSERT INTO errors(error) VALUE(?)', {error})
+            cursor.execute('INSERT INTO errors (error) VALUES (?)', (error,))
             cursor.close()
             app_status = "Error"
             return False
@@ -513,5 +519,7 @@ else:
 
         
 if __name__ == '__main__':
+    thread = threading.Thread(target=background_tasks, daemon=True)
+    thread.start()
     
     app.run('0.0.0.0', debug=True)
