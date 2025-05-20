@@ -170,7 +170,8 @@ def index():
                 error_cursor = error_conn.cursor()
                 error_cursor.execute('SELECT * FROM errors')
                 errors = error_cursor.fetchmany(10)
-                error_cursor.close
+                error_cursor.close()
+                error_conn.close()
             except Exception as e:
                 errors = 'No Errors'    
 
@@ -269,7 +270,7 @@ def time_delay():
             delay TEXT NOT NULL)''')
     conn.commit()
 
-    cursor.execute('INSERT INTO time_delay(delay) VALUE (?)', (delay))
+    cursor.execute('INSERT INTO time_delay(delay) VALUE (?)', (delay,))
     conn.commit()
     cursor.close()
 
@@ -382,7 +383,7 @@ def send_alarm_messages():
 
         for row in alarm_table:
             if row not in alarm_names and alarm_table[2] == 1:
-                cursor.execute('UPDATE alarms(alarm) SET is_active = 0')
+                cursor.execute('UPDATE alarms SET is_active = 0 WHERE alarm = ?'(0, alarm))
                 conn.commit()
 
 
@@ -417,7 +418,6 @@ def send_alarm_messages():
     phone_numbers = []
     for user in users:
         phone_numbers.append(user[-1])
-        return phone_numbers
 
 
 
@@ -467,17 +467,20 @@ def background_tasks():
         except Exception as e:
             error = 'Send Alarm Error'
             # Build an error database
-            conn = sqlite3.connect('error.db')
-            cursor = conn.cursor()
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS errors(
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    error TEXT NOT NULL)''')
-            conn.commit()
-            cursor.execute('INSERT INTO errors (error) VALUES (?)', (error,))
-            cursor.close()
-            app_status = "Error"
-            return False
+            try:
+                conn = sqlite3.connect('error.db')
+                cursor = conn.cursor()
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS errors(
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        error TEXT NOT NULL)''')
+                conn.commit()
+                cursor.execute('INSERT INTO errors (error) VALUES (?)', (error,))
+                cursor.close()
+                conn.close()
+                app_status = "Error"
+            except Exception as db_error:
+                print(f"error {db_error}")
 
 # This checks to make sure there is a database before starting the script.
 def check_databases():
