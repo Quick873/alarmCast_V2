@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/dashboard_style.css">
+    <title>AlarmCast</title>
+</head>
+<body>
+    <div id="error-container">
+        <div id="values-status-container">
+            <div id="ip-status-container">
+                <p>IP Address: {{ ip_address }}</p>
+            </div>
+            <div id="alarmclass-status-container">
+                <p>Alarm Class: {{ alarm_class }}</p>
+            </div>
+            <div id="user-status-container">
+                {% if users == "Missing Users" %}
+                    <p>No user Found</p>
+                {% else %}
+                    <ul>
+                        {% for u in users %}
+                            <li>{{ u[1] }} - {{ u[2] }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        <div id="error-status-container">
+            <h1>Error Log</h1>
+            <div id="error-status">
+                {% if errors == "No Errors" %}
+                    <p>No Errors.</p>
+                {% else %}
+                    <ul>
+                        {% for error in errors %}
+                            <li>
+                                {{ error }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div id="form-container">
+        <div id="form-image-container">
+            <img src="../static/AlarmCast Logo.png" alt="alarmCast Logo">
+        </div>
+        <h4>Enter New Values If Needed</h4>
+        <form action="/update_ip" method="post" id="ip-container">
+            <label for="ipaddress">Enter the station IP address:</label>
+            <input type="text" name="ipaddress" id="ipaddress" placeholder="Enter IP Address here.">
+            <button id="ip-submit" type="submit">Update</button>
+        </form>
+        <form action="adduser" method="post" id="adduser-container">
+            <h4 id="adduser-title">Add a user here</h4>
+            <label for="addname">Name:</label>
+            <input type="text" name="addname" id="addname" placeholder="Enter one name at a time.">
+            <label for="addnumber">Phone Number:</label>
+            <input type="tel" name="addnumber" id="addnumber" placeholder="Enter one number at a time.">
+            <button id="user-add" type="submit">Add User</button>
+        </form>
+        <form action="removeuser" method="post" id="removeuser-container">
+            <h4>Remove a user here</h4>
+            <label for="removename">Name:</label>
+            <input type="text" name="removename" id="removename" placeholder="Enter a name.">
+            <label for="removenumber">Phone Number:</label>
+            <input type="tel" name="removenumber" id="removenumber" placeholder="Enter a number.">
+            <button id="user-remove" type="submit">Remove User</button>
+        </form>
+        <form action="alarmclass" method="post" id="alarm-class-container">
+            <label for="alarm-class">Alarm Class:</label>
+            <input type="text" name="alarm-class" id="alarm-class" placeholder="Enter one alarm class at a time.">
+            <button type="submit" id="alarm-class-button">Add Class</button>
+        </form>
+        <form action="timedelay" method="post" id="time-delay-container">
+            <label for="time-delay">Time to recieve texts(military time):</label>
+            <input type="number" name="time-delay" id="time-delay" placeholder="Enter time.">
+            <button id="time-delay-button" type="submit">Add Time</button>
+        </form>
+        <form action="stationname" method="post" id="station-name-container">
+            <label for="station-name">What is the station's name?</label>
+            <input type="text" name="station-name" id="station-name" placeholder="Enter location name.">
+            <button id="station-name-button" type="submit">Add Name</button>
+        </form>
+    </div>
+    <div id="alarm-container">
+        <form action="/logout" method="post" id="logout-button-container">
+            <button id="logout-button" type="submit">Logout</button>
+        </form>
+        <div id="reboot-container">
+            <div id="status-container">
+                <p>Status: {{ status }}</p>
+            </div>
+            <form action="/reboot" method="get">
+                <button id="reboot-button" type="submit">Reboot</button>
+            </form>
+            <p id="refresh-p">Make sure to refresh your browser after hitting the reboot button.</p>
+        </div>
+        <div id="alarm-log-container">
+            <h1>Alarm Log</h1>
+            <div id="alarm-log">
+                <p>{{ alarms }}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

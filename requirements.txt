@@ -1,0 +1,7 @@
+Flask
+requests
+python-dotenv
+flask-login
+flask-wtf
+WTForms
+twilio

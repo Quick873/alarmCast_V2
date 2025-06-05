@@ -1,0 +1,54 @@
+body {
+    display: flex;
+    justify-content: center;
+}
+
+#form-container {
+    display: flex;
+    width: 75%;
+    background-color: lightblue;
+    border: 5px solid rgb(4, 0, 255);
+    border-radius: 25px;
+    flex-direction: column;
+    box-shadow: 10px 10px black;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+}
+
+#image-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+}
+
+img {
+    width: 100%;
+}
+
+form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin: 10%;
+}
+
+#user-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 5%;
+    width: 100%;
+}
+
+#password-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 5%;
+    width: 100%;
+}
